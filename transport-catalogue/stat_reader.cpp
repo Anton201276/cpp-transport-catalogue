@@ -8,7 +8,7 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
         size_t dst = request.find_last_not_of(' ') - idx + 1;
         std::string_view busroute = request.substr(idx, dst);
 
-        BusRoutStatistic statistic = tansport_catalogue.GetRouteStatistic(busroute);
+        BusRouteStatistic statistic = tansport_catalogue.GetRouteStatistic(busroute);
 
         output << std::setprecision(6);
 
@@ -27,20 +27,21 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
         size_t dst = request.find_last_not_of(' ') - idx + 1;
         std::string_view busroute = request.substr(idx, dst);
 
+        if (tansport_catalogue.GetBusStopInfo(busroute) == nullptr) {
+            output << "Stop "s << busroute << ": not found" << "\n";
+            return;
+        }
+
         vector<string_view> statistic = tansport_catalogue.GetRouteForBusStop(busroute);
 
-        if (statistic.back() == "no buses") {
+        if (statistic.empty()) {
             output << "Stop "s << busroute << ": no buses" << "\n";
+            return;
         }
-        else if (statistic.back() == "not found") {
-            output << "Stop "s << busroute << ": not found" << "\n";
+        output << "Stop "s << busroute << ": buses";
+        for (auto it = statistic.begin(); it != statistic.end(); ++it) {
+            output << " " << *it;
         }
-        else {
-            output << "Stop "s << busroute << ": buses";
-            for (auto it = statistic.begin(); it != statistic.end(); ++it) {
-                output << " " << *it;
-            }
-            output << "\n";
-        }
+        output << "\n";
     }
 }

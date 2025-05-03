@@ -26,8 +26,8 @@ namespace transportcatalogue {
 	};
 
 	struct BusRouteStatistic {
-		size_t countstopbus = 0;
-		size_t uniqstopbus = 0;
+		size_t count_stopbus = 0;
+		size_t uniq_stopbus = 0;
 		double lenght = 0;
 	};
 
@@ -39,7 +39,7 @@ namespace transportcatalogue {
 		const BusRouteInfo* GetRouteInfo(string_view name) const;
 		const BusStopInfo* GetBusStopInfo(string_view name) const;
 		BusRouteStatistic GetRouteStatistic(string_view name) const;
-		const vector<string_view>& GetRouteForBusStop(string_view name) const;
+		const unordered_set<string_view>& GetRouteForBusStop(string_view name) const;
 
 	private:
 		deque<BusStopInfo> busstop_info_;

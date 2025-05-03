@@ -12,12 +12,12 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
 
         output << std::setprecision(6);
 
-        if (statistic.countstopbus == 0) {
+        if (statistic.count_stopbus == 0) {
             output << "Bus "s << busroute << ": not found" << "\n";
             return;
         }
 
-        output << "Bus "s << busroute << ": "s << statistic.countstopbus << " stops on route, "s << statistic.uniqstopbus
+        output << "Bus "s << busroute << ": "s << statistic.count_stopbus << " stops on route, "s << statistic.uniq_stopbus
             << " unique stops, "s << statistic.lenght << " route length"s << "\n";
         return;
     }
@@ -32,12 +32,15 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
             return;
         }
 
-        vector<string_view> statistic = tansport_catalogue.GetRouteForBusStop(busroute);
-
+        vector<string_view> statistic(tansport_catalogue.GetRouteForBusStop(busroute).begin(), tansport_catalogue.GetRouteForBusStop(busroute).end());
+        
         if (statistic.empty()) {
             output << "Stop "s << busroute << ": no buses" << "\n";
             return;
         }
+
+        sort(statistic.begin(), statistic.end());
+        
         output << "Stop "s << busroute << ": buses";
         for (auto it = statistic.begin(); it != statistic.end(); ++it) {
             output << " " << *it;

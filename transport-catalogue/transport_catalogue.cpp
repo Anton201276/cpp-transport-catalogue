@@ -63,8 +63,8 @@ namespace transportcatalogue {
             qname.insert(vname->name);
         }
 
-        retinfo.countstopbus = ptr->busstop_info.size();
-        retinfo.uniqstopbus = qname.size();
+        retinfo.count_stopbus = ptr->busstop_info.size();
+        retinfo.uniq_stopbus = qname.size();
         double lenghtroute = 0.0;
 
         for (size_t id = 0; id < ptr->busstop_info.size() - 1; ++id) {
@@ -74,14 +74,13 @@ namespace transportcatalogue {
         return retinfo;
     }
 
-    const vector<string_view>& TransportCatalogue::GetRouteForBusStop(string_view name) const {
-        static vector<string_view> vecroutename{};
+    const unordered_set<string_view>& TransportCatalogue::GetRouteForBusStop(string_view name) const {
+        static const unordered_set<string_view> return_route_name{};
         if (ptr_busstop_route_info_.count(name)) {
-            for (auto it = ptr_busstop_route_info_.at(name).begin(); it != ptr_busstop_route_info_.at(name).end(); ++it) {
-                    vecroutename.push_back(*it);
-            }
-            sort(vecroutename.begin(), vecroutename.end());
+            return ptr_busstop_route_info_.at(name);
         }
-        return vecroutename;
+        else {
+            return return_route_name;
+        }
     }
 }

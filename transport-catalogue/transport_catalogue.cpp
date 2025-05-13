@@ -14,6 +14,19 @@ namespace transportcatalogue {
         ptr_busstop_info_[busstop_info_.back().name] = &busstop_info_.back();
     }
 
+    void TransportCatalogue::AddBusStopDistance(std::string_view name, const std::vector<std::pair<std::string_view, int>>& distance) {
+        if (name.empty()) {
+            return;
+        }
+
+        for(auto pair_value : distance) {
+            std::string_view busstop_name = ptr_busstop_info_[name]->name;
+            std::string_view distance_name = ptr_busstop_info_[pair_value.first]->name;
+            std::pair<string_view, string_view> p_tmp{move(busstop_name), move(distance_name)};
+            busstop_distance_info_[move(p_tmp)] = pair_value.second;
+        }
+    }
+
     void TransportCatalogue::AddBusRoute(const string& name, const vector<string_view>& busroute) {
 
         if (name.empty() || busroute.empty()) {
@@ -34,7 +47,8 @@ namespace transportcatalogue {
     }
 
     const BusRouteInfo* TransportCatalogue::GetRouteInfo(string_view name) const {
-        auto itr = find_if(ptr_busroute_info_.begin(), ptr_busroute_info_.end(), [=](const std::pair < const string_view, const BusRouteInfo*> brstr) { return brstr.first == name;});
+        //auto itr = find_if(ptr_busroute_info_.begin(), ptr_busroute_info_.end(), [=](const std::pair < const string_view, const BusRouteInfo*> brstr) { return brstr.first == name;});
+        auto itr = ptr_busroute_info_.find(name);
         if (itr != ptr_busroute_info_.end()) {
             return itr->second;
         }
@@ -42,7 +56,8 @@ namespace transportcatalogue {
     }
 
     const BusStopInfo* TransportCatalogue::GetBusStopInfo(string_view name) const {
-        auto itr = find_if(ptr_busstop_info_.begin(), ptr_busstop_info_.end(), [=](const std::pair<const string_view, const BusStopInfo*> brstr) { return brstr.first == name;});
+        //auto itr = find_if(ptr_busstop_info_.begin(), ptr_busstop_info_.end(), [=](const std::pair<const string_view, const BusStopInfo*> brstr) { return brstr.first == name;});
+        auto itr = ptr_busstop_info_.find(name);
         if (itr != ptr_busstop_info_.end()) {
             return itr->second;
         }
@@ -66,11 +81,27 @@ namespace transportcatalogue {
         retinfo.count_stopbus = ptr->busstop_info.size();
         retinfo.uniq_stopbus = qname.size();
         double lenghtroute = 0.0;
+        int distance = 0;
 
         for (size_t id = 0; id < ptr->busstop_info.size() - 1; ++id) {
             lenghtroute += ComputeDistance(ptr->busstop_info[id]->coordinates, ptr->busstop_info[id + 1]->coordinates);
+            pair<string_view, string_view> bs_pair{ ptr->busstop_info[id]->name , ptr->busstop_info[id + 1]->name };
+            auto itr = busstop_distance_info_.find(bs_pair);
+            if (itr != busstop_distance_info_.end()) {
+                distance += itr->second;
+            }
+            else {
+                bs_pair.first = ptr->busstop_info[id + 1]->name;
+                bs_pair.second = ptr->busstop_info[id]->name;
+                auto itr = busstop_distance_info_.find(bs_pair);
+                if (itr != busstop_distance_info_.end()) {
+                    distance += itr->second;
+                }
+            }
         }
+        retinfo.distance = distance;
         retinfo.lenght = lenghtroute;
+        retinfo.curvature = static_cast<double>(distance) / lenghtroute;
         return retinfo;
     }
 

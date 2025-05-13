@@ -18,7 +18,7 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
         }
 
         output << "Bus "s << busroute << ": "s << statistic.count_stopbus << " stops on route, "s << statistic.uniq_stopbus
-            << " unique stops, "s << statistic.lenght << " route length"s << "\n";
+            << " unique stops, "s << statistic.distance << " route length, "s << statistic.curvature << " curvature"s << "\n";
         return;
     }
 

@@ -14,17 +14,14 @@ namespace transportcatalogue {
         ptr_busstop_info_[busstop_info_.back().name] = &busstop_info_.back();
     }
 
-    void TransportCatalogue::AddBusStopDistance(std::string_view name, const std::vector<std::pair<std::string_view, int>>& distance) {
-        if (name.empty()) {
+    void TransportCatalogue::SetBusStopDistance(std::string_view busstop, std::string_view busstop_next, int distance) {
+        if (busstop.empty() || busstop_next.empty() || distance == 0) {
             return;
         }
-
-        for(auto pair_value : distance) {
-            std::string_view busstop_name = ptr_busstop_info_[name]->name;
-            std::string_view distance_name = ptr_busstop_info_[pair_value.first]->name;
-            std::pair<string_view, string_view> p_tmp{move(busstop_name), move(distance_name)};
-            busstop_distance_info_[move(p_tmp)] = pair_value.second;
-        }
+        std::string_view busstop_name = ptr_busstop_info_[busstop]->name;
+        std::string_view distance_name = ptr_busstop_info_[busstop_next]->name;
+        std::pair<string_view, string_view> p_tmp{ move(busstop_name), move(distance_name) };
+        busstop_distance_info_[move(p_tmp)] = distance;
     }
 
     void TransportCatalogue::AddBusRoute(const string& name, const vector<string_view>& busroute) {
@@ -47,7 +44,6 @@ namespace transportcatalogue {
     }
 
     const BusRouteInfo* TransportCatalogue::GetRouteInfo(string_view name) const {
-        //auto itr = find_if(ptr_busroute_info_.begin(), ptr_busroute_info_.end(), [=](const std::pair < const string_view, const BusRouteInfo*> brstr) { return brstr.first == name;});
         auto itr = ptr_busroute_info_.find(name);
         if (itr != ptr_busroute_info_.end()) {
             return itr->second;
@@ -55,8 +51,7 @@ namespace transportcatalogue {
         return nullptr;
     }
 
-    const BusStopInfo* TransportCatalogue::GetBusStopInfo(string_view name) const {
-        //auto itr = find_if(ptr_busstop_info_.begin(), ptr_busstop_info_.end(), [=](const std::pair<const string_view, const BusStopInfo*> brstr) { return brstr.first == name;});
+    const BusStopInfo* TransportCatalogue::GetBusStopInfo(string_view name) const {        
         auto itr = ptr_busstop_info_.find(name);
         if (itr != ptr_busstop_info_.end()) {
             return itr->second;
@@ -113,5 +108,10 @@ namespace transportcatalogue {
         else {
             return return_route_name;
         }
+    }
+
+    const int TransportCatalogue::GetBusStopDistance(std::string_view busstop, std::string_view busstop_next) const {
+        std::pair<string_view, string_view> p_tmp{ move(busstop), move(busstop_next) };
+        return busstop_distance_info_.at(move(p_tmp));
     }
 }

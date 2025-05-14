@@ -37,8 +37,9 @@ namespace transportcatalogue {
 	public:
 		void AddBusStop(const string& name, Coordinates coordinates);
 		void AddBusRoute(const string& name, const vector<string_view>& busroute);
-		void AddBusStopDistance(std::string_view name, const std::vector<std::pair<std::string_view, int>>& distance);
+		void SetBusStopDistance(std::string_view busstop, std::string_view busstop_next, int distance);
 
+		const int GetBusStopDistance(std::string_view busstop, std::string_view busstop_next) const;
 		const BusRouteInfo* GetRouteInfo(string_view name) const;
 		const BusStopInfo* GetBusStopInfo(string_view name) const;
 		BusRouteStatistic GetRouteStatistic(string_view name) const;

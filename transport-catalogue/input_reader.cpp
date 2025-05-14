@@ -165,7 +165,10 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) 
 
     for (auto itr = commands_.begin(); itr != commands_.end(); ++itr) {
         if (itr->command == "Stop") {
-            catalogue.AddBusStopDistance(itr->id, ParseBusStopDistance(busstop_dist[itr->id]));
+            std::vector<std::pair<std::string_view, int>> bus_distance = ParseBusStopDistance(busstop_dist[itr->id]);
+            for (std::pair<std::string_view, int>& pair_value : bus_distance) {
+                catalogue.SetBusStopDistance(itr->id, pair_value.first, pair_value.second);
+            }
         }
     }
 

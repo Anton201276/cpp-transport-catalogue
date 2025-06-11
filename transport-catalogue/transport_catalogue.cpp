@@ -8,7 +8,7 @@ namespace transportcatalogue {
             return;
         }
 
-        BusStopInfo sbusstopinfo{ name , coordinates };
+        StopInfo sbusstopinfo{ name , coordinates };
 
         busstop_info_.push_back(move(sbusstopinfo));
         ptr_busstop_info_[busstop_info_.back().name] = &busstop_info_.back();
@@ -24,12 +24,12 @@ namespace transportcatalogue {
         busstop_distance_info_[move(p_tmp)] = distance;
     }
 
-    void TransportCatalogue::AddBusRoute(const string& name, const vector<string_view>& busroute) {
+    void TransportCatalogue::AddBusRoute(const string& name, const vector<string_view>& busroute, bool type) {
 
         if (name.empty() || busroute.empty()) {
             return;
         }
-        BusRouteInfo sbusrouteinfo{ name, {} };
+        BusInfo sbusrouteinfo{ name, {} , type };
 
         for (auto itr = busroute.begin(); itr != busroute.end(); ++itr) {
             sbusrouteinfo.busstop_info.push_back(ptr_busstop_info_[*itr]);
@@ -43,7 +43,7 @@ namespace transportcatalogue {
         }
     }
 
-    const BusRouteInfo* TransportCatalogue::GetRouteInfo(string_view name) const {
+    BusPtr TransportCatalogue::GetRouteInfo(string_view name) const {
         auto itr = ptr_busroute_info_.find(name);
         if (itr != ptr_busroute_info_.end()) {
             return itr->second;
@@ -51,7 +51,7 @@ namespace transportcatalogue {
         return nullptr;
     }
 
-    const BusStopInfo* TransportCatalogue::GetBusStopInfo(string_view name) const {        
+    StopPtr TransportCatalogue::GetBusStopInfo(string_view name) const {
         auto itr = ptr_busstop_info_.find(name);
         if (itr != ptr_busstop_info_.end()) {
             return itr->second;
@@ -59,9 +59,9 @@ namespace transportcatalogue {
         return nullptr;
     }
 
-    BusRouteStatistic TransportCatalogue::GetRouteStatistic(string_view name) const {
-        const BusRouteInfo* ptr = GetRouteInfo(name);
-        BusRouteStatistic retinfo;
+    BusStatistic TransportCatalogue::GetRouteStatistic(string_view name) const {
+        BusPtr ptr = GetRouteInfo(name);
+        BusStatistic retinfo;
 
         if (ptr == nullptr) {
             return retinfo;
@@ -110,8 +110,34 @@ namespace transportcatalogue {
         }
     }
 
-    const int TransportCatalogue::GetBusStopDistance(std::string_view busstop, std::string_view busstop_next) const {
+    int TransportCatalogue::GetBusStopDistance(std::string_view busstop, std::string_view busstop_next) const {
         std::pair<string_view, string_view> p_tmp{ move(busstop), move(busstop_next) };
         return busstop_distance_info_.at(move(p_tmp));
     }
+
+    int TransportCatalogue::GetCountBuses() const {
+        return static_cast<int>(busroute_info_.size());
+    }
+
+    vector<string_view> TransportCatalogue::GetNotEmptyBusesName() const {
+        vector<string_view> vec;
+
+        for (const auto& [str, ptr] : ptr_busroute_info_) {
+            if (!ptr->busstop_info.empty()) {
+                vec.push_back(str);
+            }
+        } 
+
+        return vec;
+    }
+
+    vector<string_view> TransportCatalogue::GetAllBusesName() const {
+        vector<string_view> vec;
+        for (const auto& [str, ptr] : ptr_busroute_info_) {
+            vec.push_back(str);
+        }
+        return vec;
+    }
 }
+
+

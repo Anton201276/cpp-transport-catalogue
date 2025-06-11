@@ -1,33 +1,29 @@
 #include <iostream>
-#include <string>
+#include "request_handler.h"
+#include "json_reader.h"
+#include "map_renderer.h"
 
-#include "input_reader.h"
-#include "stat_reader.h"
-
-using namespace std;
-using namespace transportcatalogue;
+using namespace std::literals;
 
 int main() {
+
     TransportCatalogue catalogue;
+    MapRenderer render;
+    RequestHandler request_handler(catalogue, render);
 
-    int base_request_count;
-    cin >> base_request_count >> ws;
+    std::string in_string;
+    std::string in_json_file;
 
-    {
-        InputReader reader;
-        for (int i = 0; i < base_request_count; ++i) {
-            string line;
-            getline(cin, line);
-            reader.ParseLine(line);
-        }
-        reader.ApplyCommands(catalogue);
+    try {
+        json::Document doc = Load(std::cin);
+        LoadTransportCatalogueFromJson(catalogue, doc);
+        LoadRendererSettingFromJson(render, doc);
+        AddStatisticsRequestFromJson(request_handler, doc);
     }
-
-    int stat_request_count;
-    cin >> stat_request_count >> ws;
-    for (int i = 0; i < stat_request_count; ++i) {
-        string line;
-        getline(cin, line);
-        ParseAndPrintStat(catalogue, line, cout);
+    catch (...) {
+        std::cerr << "Ошибка ввода json-файла"sv << std::endl;
+        std::cin.clear();
+        return 0;
     }
+    PrintAnswerToJson(request_handler, std::cout);
 }

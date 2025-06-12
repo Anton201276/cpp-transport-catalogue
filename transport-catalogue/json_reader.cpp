@@ -6,8 +6,15 @@ void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document
 	Dict top_dict = doc.GetRoot().AsMap();
 	Array bus_stop_desc = top_dict["base_requests"].AsArray();
 
-	for (size_t j = 0; j < bus_stop_desc.size(); ++j) {
-		Dict stop_dict = bus_stop_desc[j].AsMap();
+	LoadStops(tc,bus_stop_desc);
+	LoadStopsDistance(tc, bus_stop_desc);
+	LoadBuses(tc, bus_stop_desc);
+
+}
+
+void LoadStops(TransportCatalogue& tc, const Array& stop_desc) {
+	for (size_t j = 0; j < stop_desc.size(); ++j) {
+		Dict stop_dict = stop_desc[j].AsMap();
 		auto itr = stop_dict.find("type");
 		if (itr->second.AsString() == "Stop") {
 			const std::string stop_name = stop_dict.at("name").AsString();
@@ -15,9 +22,11 @@ void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document
 			tc.AddBusStop(stop_name, coordinates);
 		}
 	}
+}
 
-	for (size_t j = 0; j < bus_stop_desc.size(); ++j) {
-		Dict dict = bus_stop_desc[j].AsMap();
+void LoadStopsDistance(TransportCatalogue& tc, const Array& stop_desc) {
+	for (size_t j = 0; j < stop_desc.size(); ++j) {
+		Dict dict = stop_desc[j].AsMap();
 		auto itr = dict.find("type");
 		if (itr->second.AsString() == "Stop") {
 			auto itr_d = dict.find("road_distances");
@@ -31,7 +40,14 @@ void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document
 				}
 			}
 		}
-		else {
+	}
+}
+
+void LoadBuses(TransportCatalogue& tc, const Array& stop_desc) {
+	for (size_t j = 0; j < stop_desc.size(); ++j) {
+		Dict dict = stop_desc[j].AsMap();
+		auto itr = dict.find("type");
+		if (itr->second.AsString() == "Bus") {
 			const std::string bus_name = dict.at("name").AsString();
 			Array stops_name = dict.at("stops").AsArray();
 			Array tmp_stop(stops_name.begin(), stops_name.end());
@@ -84,13 +100,13 @@ void PrintAnswerToJson(RequestHandler& rh, std::ostream& output) {
 		std::string name;
 		std::tie(id, type, name) = rh.GetRequestByNumber(j);
 		if (type == "Stop"s) {
-			a_node.push_back(NodeAnswerBusesByStop(rh, id, name));
+			a_node.push_back(GetAnswerBusesByStop(rh, id, name));
 		}
 		else if (type == "Bus"s) {
-			a_node.push_back(NodeAnswerBusStatistics(rh, id, name));
+			a_node.push_back(GetAnswerBusStatistics(rh, id, name));
 		}
 		else {
-			a_node.push_back(SvgAnswerRenderMap(rh, id));
+			a_node.push_back(GetAnswerSvgMap(rh, id));
 		}
 	}
 		
@@ -98,7 +114,7 @@ void PrintAnswerToJson(RequestHandler& rh, std::ostream& output) {
 	Print(doc, output);
 }
 
-Dict NodeAnswerBusesByStop(const RequestHandler& rh, const int id, const std::string& name) {
+Dict GetAnswerBusesByStop(const RequestHandler& rh, const int id, const std::string& name) {
 	
 	Dict d_node;
 
@@ -128,7 +144,7 @@ Dict NodeAnswerBusesByStop(const RequestHandler& rh, const int id, const std::st
 	return d_node;
 }
 
-Dict NodeAnswerBusStatistics(const RequestHandler& rh, const int id, const std::string& name) {
+Dict GetAnswerBusStatistics(const RequestHandler& rh, const int id, const std::string& name) {
 	std::optional<BusStat> busstat = rh.GetBusStat(name);
 	Dict node;
 
@@ -147,7 +163,7 @@ Dict NodeAnswerBusStatistics(const RequestHandler& rh, const int id, const std::
 	return node;
 }
 
-Dict SvgAnswerRenderMap(const RequestHandler& rh, const int id) {
+Dict GetAnswerSvgMap(const RequestHandler& rh, const int id) {
 	Dict d_node;
 	svg::Document doc = rh.RenderMap();
 	std::ostringstream s_out;
@@ -166,6 +182,10 @@ void LoadRendererSettingFromJson(MapRenderer& mr, const json::Document& doc) {
 	Dict render_settings = top_dict["render_settings"].AsMap();
 	MapSettings map_settings;
 
+	//double qd = render_settings["width"].AsDouble();
+
+	//std::cout << "qd= " << qd << "\n";
+
 	map_settings.wight = render_settings["width"].AsDouble();
 	map_settings.height = render_settings["height"].AsDouble();
 	map_settings.padding = render_settings["padding"].AsDouble();
@@ -179,7 +199,10 @@ void LoadRendererSettingFromJson(MapRenderer& mr, const json::Document& doc) {
 	map_settings.stop_label_offset[1] = render_settings["stop_label_offset"].AsArray()[1].AsDouble();
 	map_settings.underlayer_color = mr.GetColorFromJsonNote(render_settings["underlayer_color"]);
 	map_settings.underlayer_width = render_settings["underlayer_width"].AsDouble();
-	map_settings.color_palette = render_settings["color_palette"].AsArray();
+
+	for (const auto& note : render_settings["color_palette"].AsArray()) {
+		map_settings.color_palette.push_back(mr.GetColorFromJsonNote(note));
+	}
 
 	mr.SetMapSettings(map_settings);
 }

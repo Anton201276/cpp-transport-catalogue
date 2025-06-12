@@ -105,7 +105,7 @@ namespace renderer {
         double stop_label_offset[2] = { 7,-3 };
         svg::Color underlayer_color = Rgba{ 255, 255, 255, 0.85 };
         double underlayer_width = 3;
-        Array color_palette = { Node("green"s), Node({Node(255), Node(160), Node(0)}), Node("red"s) };
+		vector<svg::Color> color_palette = { "green"s, Rgb{255, 160, 0}, "red"s };
     };
 
     

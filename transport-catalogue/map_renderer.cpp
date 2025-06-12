@@ -78,7 +78,7 @@ namespace renderer {
 			Polyline pl;
 
 			pl.SetFillColor("none");
-			Color fromArray = GetColorFromJsonArray(map_settings_.color_palette, color_idx);
+			Color fromArray = map_settings_.color_palette[color_idx];
 			pl.SetStrokeColor(fromArray);
 			pl.SetStrokeLineCap(StrokeLineCap::ROUND);
 			pl.SetStrokeLineJoin(StrokeLineJoin::ROUND);
@@ -103,7 +103,7 @@ namespace renderer {
 			Text txt_m1;
 			Text txt_u1;
 			const svg::Point screen_coord = sph_proj(bus->busstop_info.front()->coordinates);
-			Color frompalette = GetColorFromJsonArray(map_settings_.color_palette, color_idx);
+			Color frompalette = map_settings_.color_palette[color_idx];
 
 			FillSettingsBusNameText(doc, bus->name, screen_coord, frompalette);
 

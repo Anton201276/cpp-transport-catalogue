@@ -130,14 +130,6 @@ namespace transportcatalogue {
 
         return vec;
     }
-
-    vector<string_view> TransportCatalogue::GetAllBusesName() const {
-        vector<string_view> vec;
-        for (const auto& [str, ptr] : ptr_busroute_info_) {
-            vec.push_back(str);
-        }
-        return vec;
-    }
 }
 
 

@@ -1,4 +1,5 @@
 #include "json.h"
+#include <iostream>
 
 using namespace std;
 
@@ -80,8 +81,9 @@ namespace json {
                 }
                 ++it;
             }
-
-            return s;
+            //Node rr(s);
+            //std::cout << "node value= " << rr.AsString() << "\n";
+            return Node(std::move(s));
         }
 
         Node LoadDict(istream& input) {
@@ -158,14 +160,14 @@ namespace json {
                 if (is_int) {
                     // —начала пробуем преобразовать строку в int
                     try {
-                        return std::stoi(parsed_num);
+                        return Node(std::stoi(parsed_num));
                     }
                     catch (...) {
                         // ¬ случае неудачи, например, при переполнении,
                         // код ниже попробует преобразовать строку в double
                     }
                 }
-                return std::stod(parsed_num);
+                return Node(std::stod(parsed_num));
             }
             catch (...) {
                 throw ParsingError("Failed to convert "s + parsed_num + " to number"s);
@@ -222,106 +224,78 @@ namespace json {
     }  // namespace
 
     bool Node::IsInt() const {
-        return std::holds_alternative<int>(value_) ? true : false;
+        return std::holds_alternative<int>(*this) ? true : false;
     }
 
     bool Node::IsDouble() const {
-        return std::holds_alternative<double>(value_) || IsInt() ? true : false;
+        return std::holds_alternative<double>(*this) || IsInt() ? true : false;
     }
 
     bool Node::IsPureDouble() const {
-        return std::holds_alternative<double>(value_) ? true : false;
+        return std::holds_alternative<double>(*this) ? true : false;
     }
 
     bool Node::IsBool() const {
-        return std::holds_alternative<bool>(value_) ? true : false;
+        return std::holds_alternative<bool>(*this) ? true : false;
     }
 
     bool Node::IsString() const {
-        return std::holds_alternative<string>(value_) ? true : false;
+        return std::holds_alternative<string>(*this) ? true : false;
     }
 
     bool Node::IsArray() const {
-        return std::holds_alternative<Array>(value_) ? true : false;
+        return std::holds_alternative<Array>(*this) ? true : false;
     }
 
     bool Node::IsNull() const {
-        return std::holds_alternative<std::nullptr_t>(value_) ? true : false;
+        return std::holds_alternative<std::nullptr_t>(*this) ? true : false;
     }
 
     bool Node::IsMap() const {
-        return std::holds_alternative<Dict>(value_) ? true : false;
-    }
-
-    Node::Node(std::nullptr_t nll)
-        :value_(nll) {
-    }
-
-    Node::Node(Array array)
-        : value_(move(array)) {
-    }
-
-    Node::Node(Dict map)
-        : value_(move(map)) {
-    }
-
-    Node::Node(int value)
-        : value_(value) {
-    }
-
-    Node::Node(string value)
-        : value_(move(value)) {
-    }
-
-    Node::Node(bool value)
-        : value_(value) {
-    }
-
-    Node::Node(double value)
-        : value_(move(value)) {
+        return std::holds_alternative<Dict>(*this) ? true : false;
     }
 
     const Array& Node::AsArray() const {
         if (IsArray()) {
-            return std::get<Array>(value_);
+            return std::get<Array>(*this);
         }
         throw std::logic_error("Type error");
     }
 
     const Dict& Node::AsMap() const {
         if (IsMap()) {
-            return std::get<Dict>(value_);
+            return std::get<Dict>(*this);
         }
         throw std::logic_error("Type error");
     }
 
     int Node::AsInt() const {
         if (IsInt()) {
-            return std::get<int>(value_);
+            return std::get<int>(*this);
         }
         throw std::logic_error("Type error");
     }
 
     const string& Node::AsString() const {
         if (IsString()) {
-            return std::get<string>(value_);
+            return std::get<string>(*this);
         }
         throw std::logic_error("Type error");
     }
 
     double Node::AsDouble() const {
         if (IsPureDouble()) {
-            return std::get<double>(value_);
+            return std::get<double>(*this);
         }
         else if (IsInt()) {
-            return static_cast<double>(get<int>(value_));
+            return static_cast<double>(get<int>(*this));
         }
         throw std::logic_error("Type error");
     }
 
     bool Node::AsBool() const {
         if (IsBool()) {
-            return std::get<bool>(value_);
+            return std::get<bool>(*this);
         }
         throw std::logic_error("Type error");
     }

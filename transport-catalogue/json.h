@@ -16,23 +16,17 @@ namespace json {
     using Array = std::vector<Node>;
     using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
 
-
     class ParsingError : public std::runtime_error {
     public:
         using runtime_error::runtime_error;
     };
 
-    class Node {
+    class Node final 
+        : private std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string> {
+   
     public:
 
-        Node() = default;
-        Node(std::nullptr_t nll);
-        Node(Array array);
-        Node(Dict map);
-        Node(bool value);
-        Node(int value);
-        Node(double value);
-        Node(std::string value);
+        using variant::variant;
 
         bool IsInt() const;
         bool IsDouble() const;
@@ -54,7 +48,7 @@ namespace json {
         bool operator!=(const Node& rhs) const;
 
         const Value& GetValue() const {
-            return value_;
+            return *this;
         }
 
     private:

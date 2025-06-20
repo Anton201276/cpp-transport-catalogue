@@ -28,7 +28,7 @@ namespace svg {
     void Circle::RenderObject(const RenderContext& context) const {
         auto& out = context.out;
         out << "<circle cx=\""sv << center_.x << "\" cy=\""sv << center_.y << "\" "sv;
-        out << "r=\""sv << radius_ << "\" "sv;
+        out << "r=\""sv << radius_ << "\""sv;
         //out << "/>"sv;
         RenderAttrs(context.out);
         out << "/>"sv;
@@ -140,7 +140,7 @@ namespace svg {
                 objects_[j]->Render({ out,2,2 });
             }
         }
-        out << "</svg>" << std::endl;
+        out << "</svg>";
     }
 
 }  // namespace svg

@@ -24,7 +24,7 @@ namespace transportcatalogue {
 		BusStatistic GetRouteStatistic(string_view name) const;
 		const unordered_set<string_view>& GetRouteForBusStop(string_view name) const;
 		int GetCountBuses() const;
-		vector<string_view> GetNotEmptyBusesName() const;
+		const unordered_map<string_view, BusPtr>* GetBusesInfo() const;
 
 	private:
 		struct Distance_Hasher {

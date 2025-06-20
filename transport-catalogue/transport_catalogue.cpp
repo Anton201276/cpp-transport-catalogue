@@ -119,16 +119,8 @@ namespace transportcatalogue {
         return static_cast<int>(busroute_info_.size());
     }
 
-    vector<string_view> TransportCatalogue::GetNotEmptyBusesName() const {
-        vector<string_view> vec;
-
-        for (const auto& [str, ptr] : ptr_busroute_info_) {
-            if (!ptr->busstop_info.empty()) {
-                vec.push_back(str);
-            }
-        } 
-
-        return vec;
+    const unordered_map<string_view, BusPtr>* TransportCatalogue::GetBusesInfo() const {
+        return &ptr_busroute_info_;
     }
 }
 

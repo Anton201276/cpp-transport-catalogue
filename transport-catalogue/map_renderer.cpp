@@ -24,7 +24,7 @@ namespace renderer {
 		return stc_rgb;
 	}
 
-	svg::Color MapRenderer::GetColorFromJsonNote(json::Node node) const {
+	svg::Color MapRenderer::GetColorFromJsonNode(json::Node node) const {
 		if (node.IsString()) {
 			return node.AsString();
 		}
@@ -49,7 +49,7 @@ namespace renderer {
 	}
 
 	svg::Color MapRenderer::GetColorFromJsonArray(Array nodes, int id) const {
-		return GetColorFromJsonNote(nodes[id]);
+		return GetColorFromJsonNode(nodes[id]);
 	}
 
 	svg::Document MapRenderer::MapRenderBusTrip(const std::vector<BusPtr>& buses, const vector<StopPtr>& stops) const {

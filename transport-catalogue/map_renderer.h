@@ -118,7 +118,7 @@ namespace renderer {
         void SetMapSettings(MapSettings map_settings);
         svg::Color GetRgbaColorFromJson(double ary_rgba[4]) const;
         svg::Color GetRgbColorFromJson(int ary_rgba[3]) const;
-        svg::Color GetColorFromJsonNote(json::Node node) const;
+        svg::Color GetColorFromJsonNode(json::Node node) const;
         svg::Color GetColorFromJsonArray(Array nodes, int id) const;
         
         svg::Document MapRenderBusTrip(const std::vector<BusPtr>& buses, const vector<StopPtr>& stops) const;

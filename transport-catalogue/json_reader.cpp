@@ -1,9 +1,9 @@
 #include "json_reader.h"
-#include <iostream>
+#include <sstream>
 
 void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document& doc) {
 
-	Dict top_dict = doc.GetRoot().AsMap();
+	Dict top_dict = doc.GetRoot().AsDict();
 	Array bus_stop_desc = top_dict["base_requests"].AsArray();
 
 	LoadStops(tc,bus_stop_desc);
@@ -14,7 +14,7 @@ void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document
 
 void LoadStops(TransportCatalogue& tc, const Array& stop_desc) {
 	for (size_t j = 0; j < stop_desc.size(); ++j) {
-		Dict stop_dict = stop_desc[j].AsMap();
+		Dict stop_dict = stop_desc[j].AsDict();
 		auto itr = stop_dict.find("type");
 		if (itr->second.AsString() == "Stop") {
 			const std::string stop_name = stop_dict.at("name").AsString();
@@ -26,12 +26,12 @@ void LoadStops(TransportCatalogue& tc, const Array& stop_desc) {
 
 void LoadStopsDistance(TransportCatalogue& tc, const Array& stop_desc) {
 	for (size_t j = 0; j < stop_desc.size(); ++j) {
-		Dict dict = stop_desc[j].AsMap();
+		Dict dict = stop_desc[j].AsDict();
 		auto itr = dict.find("type");
 		if (itr->second.AsString() == "Stop") {
 			auto itr_d = dict.find("road_distances");
 			if (itr_d != dict.end()) {
-				Dict dist_dict = itr_d->second.AsMap();
+				Dict dist_dict = itr_d->second.AsDict();
 				for (const auto& dist : dist_dict) {
 					const std::string stop_name = dict.at("name").AsString();
 					std::string_view stop_next = dist.first;
@@ -45,7 +45,7 @@ void LoadStopsDistance(TransportCatalogue& tc, const Array& stop_desc) {
 
 void LoadBuses(TransportCatalogue& tc, const Array& stop_desc) {
 	for (size_t j = 0; j < stop_desc.size(); ++j) {
-		Dict dict = stop_desc[j].AsMap();
+		Dict dict = stop_desc[j].AsDict();
 		auto itr = dict.find("type");
 		if (itr->second.AsString() == "Bus") {
 			const std::string bus_name = dict.at("name").AsString();
@@ -60,19 +60,18 @@ void LoadBuses(TransportCatalogue& tc, const Array& stop_desc) {
 			for (const auto& sn : tmp_stop) {
 				stops_vec.push_back(sn.AsString());
 			}
-
 			tc.AddBusRoute(bus_name, stops_vec, dict.at("is_roundtrip").AsBool());
 		}
 	}
 }
 
 void AddStatisticsRequestFromJson(RequestHandler& rh, const json::Document& doc) {
-	Dict top_dict = doc.GetRoot().AsMap();
+	Dict top_dict = doc.GetRoot().AsDict();
 	Array stat_desc = top_dict["stat_requests"].AsArray();
 
 	if (!stat_desc.empty()) {
 		for (const auto& arr : stat_desc) {
-			Dict dict = arr.AsMap();
+			Dict dict = arr.AsDict();
 			if (dict["type"].AsString() != "Map") {
 				std::tuple<int, std::string, std::string> stat_tuple{ dict["id"].AsInt(), dict["type"].AsString(), dict["name"].AsString() };
 				rh.AddStatisticsRequest(stat_tuple);
@@ -92,7 +91,8 @@ void PrintAnswerToJson(RequestHandler& rh, std::ostream& output) {
 		return;
 	}
 
-	Array a_node;
+	json::Builder jb = json::Builder();
+	jb.StartArray();
 
 	for (int j = 0; j < count_req; ++j) {
 		int id;
@@ -100,91 +100,81 @@ void PrintAnswerToJson(RequestHandler& rh, std::ostream& output) {
 		std::string name;
 		std::tie(id, type, name) = rh.GetRequestByNumber(j);
 		if (type == "Stop"s) {
-			a_node.push_back(GetAnswerBusesByStop(rh, id, name));
+			jb.Value(GetAnswerBusesByStop(rh, id, name).GetValue());
 		}
 		else if (type == "Bus"s) {
-			a_node.push_back(GetAnswerBusStatistics(rh, id, name));
+			jb.Value(GetAnswerBusStatistics(rh, id, name).GetValue());
 		}
 		else {
-			a_node.push_back(GetAnswerSvgMap(rh, id));
+			jb.Value(GetAnswerSvgMap(rh, id).GetValue());
 		}
 	}
-		
-	json::Document doc(std::move(a_node));
+	jb.EndArray();
+	json::Document doc(jb.Build());
 	Print(doc, output);
 }
 
-Dict GetAnswerBusesByStop(const RequestHandler& rh, const int id, const std::string& name) {
-	
-	Dict d_node;
+Node GetAnswerBusesByStop(const RequestHandler& rh, const int id, const std::string& name) {
 
+	json::Builder jb = json::Builder();
 	if (rh.GetStopBusByName(name) == nullptr) {
-		d_node["request_id"] = id;
-		d_node["error_message"] = "not found"s;
-		return d_node;
+		return jb.StartDict().Key("request_id").Value(id).Key("error_message").Value("not found"s).EndDict().Build();
 	}
 
-	Array a_node;
-	const std::unordered_set<BusPtr>* ptr_buses = std::move(rh.GetBusesByStop(name));
+	jb.StartDict().Key("buses").StartArray();
 
+	const std::vector<BusPtr>* ptr_buses = std::move(rh.GetBusesByStop(name));
 	if (ptr_buses != nullptr) {
 		vector<BusPtr> buses(ptr_buses->begin(), ptr_buses->end());
+
 		std::sort(buses.begin(), buses.end(), [](BusPtr lhs, BusPtr rhs) {return lhs->name < rhs->name;});
 
+
 		for (BusPtr ptrbus : buses) {
-			a_node.push_back(ptrbus->name);
+			jb.Value(ptrbus->name);
 		}
 	}
-
-	d_node["buses"] = a_node;
-	d_node["request_id"] = id;
-
+	jb.EndArray().Key("request_id").Value(id).EndDict();
 	delete ptr_buses;
 
-	return d_node;
+	return jb.Build();
 }
 
-Dict GetAnswerBusStatistics(const RequestHandler& rh, const int id, const std::string& name) {
+Node GetAnswerBusStatistics(const RequestHandler& rh, const int id, const std::string& name) {
 	std::optional<BusStat> busstat = rh.GetBusStat(name);
-	Dict node;
+
+	json::Builder jb = json::Builder();
 
 	if (!busstat.has_value()) {
-		node["request_id"] = id;
-		node["error_message"] = "not found"s;
+		jb.StartDict().Key("request_id"s).Value(id).Key("error_message").Value("not found"s).EndDict();
 	}
 	else {
-		node["curvature"] = busstat.value().curvature;
-		node["request_id"] = id;
-		node["route_length"] = busstat.value().distance;
-		node["stop_count"] = static_cast<int>(busstat.value().count_stopbus);
-		node["unique_stop_count"] = static_cast<int>(busstat.value().uniq_stopbus);
+		jb.StartDict().Key("curvature").Value(busstat.value().curvature).Key("request_id").Value(id)
+			.Key("route_length").Value(busstat.value().distance).Key("stop_count").Value(static_cast<int>(busstat.value().count_stopbus))
+			.Key("unique_stop_count").Value(static_cast<int>(busstat.value().uniq_stopbus)).EndDict();
 	}
 
-	return node;
+	return jb.Build();
 }
 
-Dict GetAnswerSvgMap(const RequestHandler& rh, const int id) {
-	Dict d_node;
+Node GetAnswerSvgMap(const RequestHandler& rh, const int id) {
+	
 	svg::Document doc = rh.RenderMap();
 	std::ostringstream s_out;
 	doc.Render(s_out);
 	std::string print_str;
 	print_str = s_out.str();
 
-	d_node["map"] = print_str;
-	d_node["request_id"] = id;
+	json::Builder jb = json::Builder();
+	jb.StartDict().Key("map").Value(print_str).Key("request_id").Value(id).EndDict();
 
-	return d_node;
+	return jb.Build();
 }
 
 void LoadRendererSettingFromJson(MapRenderer& mr, const json::Document& doc) {
-	Dict top_dict = doc.GetRoot().AsMap();
-	Dict render_settings = top_dict["render_settings"].AsMap();
+	Dict top_dict = doc.GetRoot().AsDict();
+	Dict render_settings = top_dict["render_settings"].AsDict();
 	MapSettings map_settings;
-
-	//double qd = render_settings["width"].AsDouble();
-
-	//std::cout << "qd= " << qd << "\n";
 
 	map_settings.wight = render_settings["width"].AsDouble();
 	map_settings.height = render_settings["height"].AsDouble();
@@ -197,11 +187,13 @@ void LoadRendererSettingFromJson(MapRenderer& mr, const json::Document& doc) {
 	map_settings.stop_label_font_size = render_settings["stop_label_font_size"].AsInt();
 	map_settings.stop_label_offset[0] = render_settings["stop_label_offset"].AsArray()[0].AsDouble();
 	map_settings.stop_label_offset[1] = render_settings["stop_label_offset"].AsArray()[1].AsDouble();
-	map_settings.underlayer_color = mr.GetColorFromJsonNote(render_settings["underlayer_color"]);
+	map_settings.underlayer_color = mr.GetColorFromJsonNode(render_settings["underlayer_color"]);
 	map_settings.underlayer_width = render_settings["underlayer_width"].AsDouble();
 
-	for (const auto& note : render_settings["color_palette"].AsArray()) {
-		map_settings.color_palette.push_back(mr.GetColorFromJsonNote(note));
+	map_settings.color_palette.clear();
+
+	for (const auto& node : render_settings["color_palette"].AsArray()) {
+		map_settings.color_palette.push_back(mr.GetColorFromJsonNode(node));
 	}
 
 	mr.SetMapSettings(map_settings);

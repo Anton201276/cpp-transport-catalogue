@@ -10,21 +10,21 @@ int RequestHandler::GetCountStatisticsRequest(void) const {
 	return statistics_request_.size();
 }
 
-const std::unordered_set<BusPtr>* RequestHandler::GetBusesByStop(const std::string_view& stop_name) const {
-	const std::unordered_set<BusPtr>* ptr_buses = nullptr;
+const std::vector<BusPtr>* RequestHandler::GetBusesByStop(const std::string_view& stop_name) const {
+	const std::vector<BusPtr>* ptr_buses = nullptr;
 
 	const unordered_set<string_view>& buses_by_stop_string = db_.GetRouteForBusStop(stop_name);
 	if (buses_by_stop_string.empty()) {
 		return ptr_buses;
 	}
 
-	std::unordered_set<BusPtr> buses_by_stop_set;
+	std::vector<BusPtr> buses_by_stop_set;
 	for (const auto str : buses_by_stop_string) {
-		buses_by_stop_set.insert(db_.GetRouteInfo(str));
+		buses_by_stop_set.push_back(db_.GetRouteInfo(str));
 	}
 	
 	try {
-		ptr_buses = new unordered_set<BusPtr>(std::move(buses_by_stop_set));
+		ptr_buses = new vector<BusPtr>(std::move(buses_by_stop_set));
 	}
 	catch (const std::exception&) {
 		
@@ -54,8 +54,15 @@ StopPtr RequestHandler::GetStopBusByName(const std::string_view& stop_name) cons
 
 svg::Document RequestHandler::RenderMap() const {
 	svg::Document doc;
-	
-	vector<string_view> buses_name = db_.GetNotEmptyBusesName();
+
+	vector<string_view> buses_name;
+	const unordered_map<string_view, BusPtr>* ptr_buses_info = db_.GetBusesInfo();
+
+	for (const auto& [str, ptr] : *ptr_buses_info) {
+		if (!ptr->busstop_info.empty()) {
+			buses_name.push_back(str);
+		}
+	}
 	std::sort(buses_name.begin(), buses_name.end());
 
 	vector<BusPtr> buses_info;

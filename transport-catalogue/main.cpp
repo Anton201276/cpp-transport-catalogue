@@ -9,11 +9,12 @@ int main() {
 
     TransportCatalogue catalogue;
     MapRenderer render;
-    RequestHandler request_handler(catalogue, render);
-	
+    TransportRouter router(catalogue);
+    RequestHandler request_handler(catalogue, router, render);
+
     try {
         json::Document doc = Load(std::cin);
-        LoadTransportCatalogueFromJson(catalogue, doc);
+        LoadTransportDataFromJson(catalogue, router, doc);
         LoadRendererSettingFromJson(render, doc);
         AddStatisticsRequestFromJson(request_handler, doc);
     }

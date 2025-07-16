@@ -18,8 +18,9 @@ using namespace renderer;
 class RequestHandler {
 public:
     //RequestHandler(const TransportCatalogue& db, const TransportRouter& router, const renderer::MapRenderer& renderer) 
-    RequestHandler(const TransportCatalogue& db, const renderer::MapRenderer& renderer)
+    RequestHandler(const TransportCatalogue& db, const TransportRouter& router, const renderer::MapRenderer& renderer)
         : db_(db),
+          router_(router),
           renderer_(renderer) {};
 
     std::optional<BusStat> GetBusStat(const std::string_view& bus_name) const;
@@ -33,13 +34,18 @@ public:
     const std::tuple<int, std::string, std::string>& GetRequestByNumber(int id) const;
     const unordered_map<string_view, BusPtr>& GetBusesInfo() const;
     const std::string& GetStopToById(int) const;
+
     const TransportCatalogue& GetTransportCatalogue() const {
         return db_;
     }
 
+    const TransportRouter& GetTransportRouter() const {
+        return router_;
+    }
+
 private:
     const TransportCatalogue& db_;
-    //const TransportRouter& router_;
+    const TransportRouter& router_;
     const renderer::MapRenderer& renderer_;
     vector<std::tuple<int, std::string, std::string>> statistics_request_{};
     unordered_map<int, std::string> stop_destination_;

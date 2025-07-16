@@ -128,20 +128,12 @@ namespace transportcatalogue {
         }
     }
 
-    int TransportCatalogue::GetCountBuses() const {
+    size_t TransportCatalogue::GetCountBuses() const {
         return static_cast<int>(busroute_info_.size());
     }
 
     const unordered_map<string_view, BusPtr>& TransportCatalogue::GetBusesInfo() const {
         return ptr_busroute_info_;
-    }
-
-    void TransportCatalogue::SetRoutingSettings(int wait, int velocity) {
-        routing_settings_.SetParams(wait, velocity);
-    }
-
-    const RoutingSettings& TransportCatalogue::GetRoutingSettings() const {
-        return routing_settings_;
     }
 
     const unordered_map<string_view, StopPtr>& TransportCatalogue::GetStopsInfo() const {

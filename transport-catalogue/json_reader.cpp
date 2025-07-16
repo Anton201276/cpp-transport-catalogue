@@ -1,6 +1,12 @@
 #include "json_reader.h"
 #include <sstream>
 
+void LoadTransportDataFromJson(TransportCatalogue& tc, TransportRouter& rt, const json::Document& doc) {
+	LoadTransportCatalogueFromJson(tc, doc);
+	LoadTransportRouterFromJson(rt, doc);
+	rt.BuildGraphRoute();
+}
+
 void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document& doc) {
 
 	Dict top_dict = doc.GetRoot().AsDict();
@@ -10,7 +16,6 @@ void LoadTransportCatalogueFromJson(TransportCatalogue& tc, const json::Document
 	LoadStops(tc,bus_stop_desc);
 	LoadStopsDistance(tc, bus_stop_desc);
 	LoadBuses(tc, bus_stop_desc);
-	LoadRoutingSettings(tc, routing_seetings);
 }
 
 void LoadStops(TransportCatalogue& tc, const Array& stop_desc) {
@@ -66,8 +71,10 @@ void LoadBuses(TransportCatalogue& tc, const Array& stop_desc) {
 	}
 }
 
-void LoadRoutingSettings(TransportCatalogue& tc, const Dict& rout_set) {
-	tc.SetRoutingSettings(rout_set.at("bus_wait_time").AsInt(), rout_set.at("bus_velocity").AsInt());
+void LoadTransportRouterFromJson(TransportRouter& rt, const json::Document& doc) {
+	Dict top_dict = doc.GetRoot().AsDict();
+	Dict rout_set = top_dict["routing_settings"].AsDict();
+	rt.SetRoutingSettings(rout_set.at("bus_wait_time").AsInt(), rout_set.at("bus_velocity").AsInt());
 }
 
 void AddStatisticsRequestFromJson(RequestHandler& rh, const json::Document& doc) {
@@ -101,8 +108,6 @@ void PrintAnswerToJson(RequestHandler& rh, std::ostream& output) {
 		return;
 	}
 
-	TransportRouter router(rh.GetTransportCatalogue());
-
 	json::Builder jb = json::Builder();
 	jb.StartArray();
 
@@ -119,7 +124,7 @@ void PrintAnswerToJson(RequestHandler& rh, std::ostream& output) {
 		}
 		else if (type == "Route"s) {
 
-			jb.Value(GetAnswerRoute(router, id, name, rh.GetStopToById(id)).GetValue());
+			jb.Value(GetAnswerRoute(rh.GetTransportRouter(), id, name, rh.GetStopToById(id)).GetValue());
 		}
 		else {
 			jb.Value(GetAnswerSvgMap(rh, id).GetValue());
@@ -175,7 +180,7 @@ Node GetAnswerBusStatistics(const RequestHandler& rh, const int id, const std::s
 
 Node GetAnswerRoute(const TransportRouter& rt, const int id, const std::string& from, const std::string& to) {
 	//json::Builder jb = json::Builder();
-	std::optional<Router<Weight>::RouteInfo> optim_route = rt.GetRoute(from, to);
+	std::optional<RouterInfo> optim_route = rt.GetGraphRoute(from, to);
 
 	json::Builder jb = json::Builder();
 
@@ -187,14 +192,14 @@ Node GetAnswerRoute(const TransportRouter& rt, const int id, const std::string& 
 	jb.Key("items").StartArray();
 
 	for (size_t i = 0; i < optim_route.value().edges.size(); ++i) {
-		EdgeId id = optim_route.value().edges[i];
-		Edge edge = rt.GetGraph().GetEdge(id);
+		EdgeInfo edge_info = optim_route.value().edges[i];
 
-		if (std::holds_alternative<WaitEdgeInfo>(rt.GetEdges()[id])) {
-			jb.StartDict().Key("type").Value("Wait").Key("stop_name").Value(std::get<WaitEdgeInfo>(rt.GetEdges()[id]).stop_ptr->name).Key("time").Value(edge.weight).EndDict();
+		if (std::holds_alternative<WaitEdgeInfo>(optim_route.value().edges[i])) {
+		  //jb.StartDict().Key("type").Value("Wait").Key("stop_name").Value(std::get<WaitEdgeInfo>(rt.GetEdges()[id]).stop_ptr->name).Key("time").Value(edge.weight).EndDict();
+			jb.StartDict().Key("type").Value("Wait").Key("stop_name").Value(std::get<WaitEdgeInfo>(edge_info).stop_ptr->name).Key("time").Value(optim_route.value().edges_weight[i]).EndDict();
 		}
 		else {
-			jb.StartDict().Key("type").Value("Bus").Key("bus").Value(std::get<BusEdgeInfo>(rt.GetEdges()[id]).bus_ptr->name).Key("span_count").Value(std::get<BusEdgeInfo>(rt.GetEdges()[id]).span_count).Key("time").Value(edge.weight).EndDict();
+			jb.StartDict().Key("type").Value("Bus").Key("bus").Value(std::get<BusEdgeInfo>(edge_info).bus_ptr->name).Key("span_count").Value(std::get<BusEdgeInfo>(edge_info).span_count).Key("time").Value(optim_route.value().edges_weight[i]).EndDict();
 		}
 	}
 

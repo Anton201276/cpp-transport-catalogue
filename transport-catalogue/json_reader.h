@@ -27,4 +27,5 @@ void LoadRendererSettingFromJson(MapRenderer& mr, const json::Document& doc);
 void LoadStops(TransportCatalogue& tc, const Array& stop_desc);
 void LoadStopsDistance(TransportCatalogue& tc, const Array& stop_desc);
 void LoadBuses(TransportCatalogue& tc, const Array& stop_desc);
-void LoadRoutingSettings(TransportCatalogue& tc, const Dict& rout_set);
+void LoadTransportRouterFromJson(TransportRouter& rt, const json::Document& doc);
+void LoadTransportDataFromJson(TransportCatalogue& tc, TransportRouter& rt, const json::Document& doc);

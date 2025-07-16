@@ -10,10 +10,7 @@ int main() {
     TransportCatalogue catalogue;
     MapRenderer render;
     RequestHandler request_handler(catalogue, render);
-
-    std::string in_string;
-    std::string in_json_file;
-
+	
     try {
         json::Document doc = Load(std::cin);
         LoadTransportCatalogueFromJson(catalogue, doc);

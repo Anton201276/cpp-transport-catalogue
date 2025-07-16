@@ -1,4 +1,4 @@
-#include "request_handler.h"
+ #include "request_handler.h"
 
 using namespace transportcatalogue;
 
@@ -52,13 +52,25 @@ StopPtr RequestHandler::GetStopBusByName(const std::string_view& stop_name) cons
 	return db_.GetBusStopInfo(stop_name);
 }
 
+const unordered_map<string_view, BusPtr>& RequestHandler::GetBusesInfo() const {
+	return db_.GetBusesInfo();
+}
+
+const std::string& RequestHandler::GetStopToById(int id) const {
+	return stop_destination_.at(id);
+}
+
+void RequestHandler::AddStopTo(int id, std::string stop_to) {
+	stop_destination_[id] = stop_to;
+}
+
 svg::Document RequestHandler::RenderMap() const {
 	svg::Document doc;
 
 	vector<string_view> buses_name;
-	const unordered_map<string_view, BusPtr>* ptr_buses_info = db_.GetBusesInfo();
+	const unordered_map<string_view, BusPtr>& ptr_buses_info = db_.GetBusesInfo();
 
-	for (const auto& [str, ptr] : *ptr_buses_info) {
+	for (const auto& [str, ptr] : ptr_buses_info) {
 		if (!ptr->busstop_info.empty()) {
 			buses_name.push_back(str);
 		}

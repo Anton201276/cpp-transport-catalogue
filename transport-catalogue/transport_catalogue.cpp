@@ -59,6 +59,10 @@ namespace transportcatalogue {
         return nullptr;
     }
 
+    size_t TransportCatalogue::GetCountStops() const {
+        return ptr_busstop_info_.size();
+    }
+
     BusStatistic TransportCatalogue::GetRouteStatistic(string_view name) const {
         BusPtr ptr = GetRouteInfo(name);
         BusStatistic retinfo;
@@ -111,16 +115,37 @@ namespace transportcatalogue {
     }
 
     int TransportCatalogue::GetBusStopDistance(std::string_view busstop, std::string_view busstop_next) const {
-        std::pair<string_view, string_view> p_tmp{ move(busstop), move(busstop_next) };
-        return busstop_distance_info_.at(move(p_tmp));
+        pair<string_view, string_view> bs_pair{ busstop , busstop_next };
+        auto itr = busstop_distance_info_.find(bs_pair);
+        if (itr != busstop_distance_info_.end()) {
+            return itr->second;
+        }
+        else {
+            bs_pair.first = busstop_next;
+            bs_pair.second = busstop;
+            auto itr = busstop_distance_info_.find(bs_pair);
+            return itr != busstop_distance_info_.end() ? itr->second : 0;
+        }
     }
 
     int TransportCatalogue::GetCountBuses() const {
         return static_cast<int>(busroute_info_.size());
     }
 
-    const unordered_map<string_view, BusPtr>* TransportCatalogue::GetBusesInfo() const {
-        return &ptr_busroute_info_;
+    const unordered_map<string_view, BusPtr>& TransportCatalogue::GetBusesInfo() const {
+        return ptr_busroute_info_;
+    }
+
+    void TransportCatalogue::SetRoutingSettings(int wait, int velocity) {
+        routing_settings_.SetParams(wait, velocity);
+    }
+
+    const RoutingSettings& TransportCatalogue::GetRoutingSettings() const {
+        return routing_settings_;
+    }
+
+    const unordered_map<string_view, StopPtr>& TransportCatalogue::GetStopsInfo() const {
+        return ptr_busstop_info_;
     }
 }
 

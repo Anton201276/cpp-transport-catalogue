@@ -17,14 +17,18 @@ namespace transportcatalogue {
 		void AddBusStop(const string& name, Coordinates coordinates);
 		void AddBusRoute(const string& name, const vector<string_view>& busroute, bool type);
 		void SetBusStopDistance(std::string_view busstop, std::string_view busstop_next, int distance);
+		void SetRoutingSettings(int wait, int velocity);
 
 		int GetBusStopDistance(std::string_view busstop, std::string_view busstop_next) const;
 		BusPtr GetRouteInfo(string_view name) const;
 		StopPtr GetBusStopInfo(string_view name) const;
+		const unordered_map<string_view, StopPtr>& GetStopsInfo() const;
 		BusStatistic GetRouteStatistic(string_view name) const;
 		const unordered_set<string_view>& GetRouteForBusStop(string_view name) const;
 		int GetCountBuses() const;
-		const unordered_map<string_view, BusPtr>* GetBusesInfo() const;
+		size_t GetCountStops() const;
+		const unordered_map<string_view, BusPtr>& GetBusesInfo() const;
+		const RoutingSettings& GetRoutingSettings() const;
 
 	private:
 		struct Distance_Hasher {
@@ -47,5 +51,7 @@ namespace transportcatalogue {
 		unordered_map<string_view, unordered_set<string_view>> ptr_busstop_route_info_;
 
 		unordered_map<pair<string_view, string_view>, int, Distance_Hasher> busstop_distance_info_;
+
+		RoutingSettings routing_settings_;
 	};
 }
